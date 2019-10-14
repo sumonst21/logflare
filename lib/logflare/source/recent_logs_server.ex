@@ -25,6 +25,7 @@ defmodule Logflare.Source.RecentLogsServer do
   alias Logflare.Source.{Data, EmailNotificationServer, TextNotificationServer, RateCounterServer}
   alias Logflare.LogEvent, as: LE
   alias Logflare.Source
+  alias Logflare.Sources
   alias Logflare.Sources.ClusterStore
   alias Logflare.Logs.SearchQueryExecutor
   alias __MODULE__, as: RLS
@@ -76,7 +77,8 @@ defmodule Logflare.Source.RecentLogsServer do
 
     {:ok, bq_count} = load_init_log_message(source_id, bigquery_project_id)
 
-    ClusterStore.set_total_log_count(source_id, bq_count)
+    source = Sources.Cache.get_by(token: source_id)
+    ClusterStore.set_total_log_count(source, bq_count)
 
     rls = %{
       rls

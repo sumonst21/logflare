@@ -77,10 +77,10 @@ defmodule Logflare.Logs do
     # indvididual source genservers
     Buffer.push(source_table_string, le)
 
-    ClusterStore.increment_counters(source)
+    :ok == ClusterStore.increment_counters(source)
 
     # all sources genservers
-    SystemMetrics.AllLogsLogged.incriment(:total_logs_logged)
+    # SystemMetrics.AllLogsLogged.incriment(:total_logs_logged)
 
     # broadcasters
     Source.ChannelTopics.broadcast_new(le)

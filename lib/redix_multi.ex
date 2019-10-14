@@ -1,6 +1,6 @@
 defmodule Logflare.RedixMulti do
   alias Logflare.Redix, as: LR
-  defstruct commands: []
+  defstruct commands: [], client_reply: :on
 
   def new() do
     %__MODULE__{}
@@ -10,14 +10,25 @@ defmodule Logflare.RedixMulti do
     Map.update!(rmulti, :commands, &[["SET", key, value] | &1])
   end
 
-  def increment(rmulti, key, opts \\ []) do
+  def client_reply(rmulti, value) when value in ~w(on off skip)a do
+    Map.put(rmulti, :client_reply, value)
+  end
+
+  def incr(rmulti, key, opts \\ []) do
     amount = opts[:amount] || 1
-    new_commands = [["INCREMENT", key, amount]]
+
+    new_commands =
+      if amount === 1 do
+        [["INCR", key]]
+      else
+        [["INCRBY", key, amount]]
+      end
+
     expire = opts[:expire]
 
     new_commands =
       if expire do
-        new_commands ++ [["EXPIRE", expire]]
+        new_commands ++ [["EXPIRE", key, expire]]
       else
         new_commands
       end
@@ -29,7 +40,35 @@ defmodule Logflare.RedixMulti do
   end
 
   def run(rmulti) do
-    rmulti.commands
-    |> LR.pipeline()
+    result =
+      case rmulti.client_reply do
+        :on ->
+          LR.pipeline(rmulti.commands)
+
+        :skip ->
+          LR.noreply_pipeline(rmulti.commands)
+      end
+
+    with {:ok, result} <- result,
+         {:ok, response} <- process_multi_response(result) do
+      {:ok, response}
+    else
+      errtup -> errtup
+    end
+  end
+
+  def process_multi_response(response) when is_list(response) do
+    errors =
+      response
+      |> Enum.filter(fn
+        %Redix.Error{} -> true
+        _ -> false
+      end)
+
+    if length(errors) > 0 do
+      {:error, %{errors: errors}}
+    else
+      {:ok, response}
+    end
   end
 end

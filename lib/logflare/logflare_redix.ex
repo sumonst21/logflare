@@ -41,6 +41,10 @@ defmodule Logflare.Redix do
     Redix.pipeline(@default_conn, commands)
   end
 
+  def noreply_pipeline(commands) when is_list(commands) do
+    Redix.noreply_pipeline(@default_conn, commands)
+  end
+
   def get(key) do
     command(["GET", key])
   end
@@ -81,5 +85,9 @@ defmodule Logflare.Redix do
 
   def multi_get(keys) when is_list(keys) do
     command(["MGET" | keys])
+  end
+
+  def keys(match \\ "*") do
+    command(["KEYS", match])
   end
 end

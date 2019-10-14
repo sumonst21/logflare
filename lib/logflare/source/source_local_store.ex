@@ -39,8 +39,8 @@ defmodule Logflare.Source.LocalStore do
     {:ok, buffer} = ClusterStore.get_buffer_count(source)
     {:ok, avg} = ClusterStore.get_default_avg_rate(source)
     {:ok, prev_source_rate} = ClusterStore.get_prev_counter(source, period: :second)
+    {:ok, last_source_rate} = ClusterStore.get_current_counter(source, period: :second)
 
-    {:ok, last_source_rate} = ClusterStore.get_source_last_rate(source.token, period: :second)
     max = Enum.max([prev_max, prev_source_rate])
 
     rates_payload = %{
