@@ -33,19 +33,19 @@ defmodule Logflare.Source.LocalStore do
 
     source = Sources.Cache.get_by_id(source_id)
 
-    {:ok, total_log_count} = ClusterStore.get_total_log_count(source_id)
+    {:ok, total_log_count} = ClusterStore.get_total_log_count(source)
 
-    {:ok, prev_max} = ClusterStore.get_max_rate(source_id)
-    {:ok, buffer} = ClusterStore.get_buffer_count(source_id)
-    {:ok, avg} = ClusterStore.get_avg_rate(source_id)
+    {:ok, prev_max} = ClusterStore.get_max_rate(source)
+    {:ok, buffer} = ClusterStore.get_buffer_count(source)
+    {:ok, avg} = ClusterStore.get_default_avg_rate(source)
+    {:ok, prev_source_rate} = ClusterStore.get_prev_counter(source, period: :second)
 
     {:ok, last_source_rate} = ClusterStore.get_source_last_rate(source.token, period: :second)
-
-    max = Enum.max([prev_max, last_source_rate])
+    max = Enum.max([prev_max, prev_source_rate])
 
     rates_payload = %{
-      last_rate: last_source_rate || 0,
-      rate: last_source_rate || 0,
+      last_rate: prev_source_rate || 0,
+      rate: prev_source_rate || 0,
       average_rate: round(avg),
       max_rate: max || 0,
       source_token: source.token
@@ -62,11 +62,9 @@ defmodule Logflare.Source.LocalStore do
       ClusterStore.set_max_rate(source_id, max)
     end
 
-    {:ok, last_source_minute_rate} =
-      ClusterStore.get_source_last_rate(source.token, period: :minute)
+    {:ok, last_source_minute_rate} = ClusterStore.get_current_counter(source, period: :minute)
 
-    {:ok, last_user_minute_rate} =
-      ClusterStore.get_user_last_rate(source.user.id, period: :minute)
+    {:ok, last_user_minute_rate} = ClusterStore.get_current_counter(source.user, period: :minute)
 
     parse_rate = fn maybe_num ->
       cond do

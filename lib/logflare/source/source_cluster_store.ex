@@ -117,7 +117,9 @@ defmodule Logflare.Sources.ClusterStore do
   # Max rate
 
   def get_max_rate(%Source{token: source_id} = _source) do
-    LR.get("source::#{source_id}::max_rate::global::v1")
+    "source::#{source_id}::max_rate::global::v1"
+    |> LR.get()
+    |> handle_response(:integer)
   end
 
   @expire 86_400
@@ -125,24 +127,54 @@ defmodule Logflare.Sources.ClusterStore do
     LR.set("source::#{source_id}::max_rate::global::v1", value, expire: @expire)
   end
 
+  def set_max_rate(source_id, value) when is_atom(source_id) do
+    LR.set("source::#{source_id}::max_rate::global::v1", value, expire: @expire)
+  end
+
   # Avg rate
 
-  def get_default_avg_rate(%Source{token: source_id} = source) do
-    source
-    |> log_counter(:minute, unix_ts_now())
-    |> LR.get()
+  def get_default_avg_rate(%Source{token: _source_id} = source) do
+    t = Timex.now()
+
+    result =
+      source
+      |> log_counter(:minute, unix_ts_now())
+      |> LR.get()
+      |> handle_response(:integer)
+
+    elapsed_seconds = if t.second === 0, do: 1, else: t.second
+
+    with {:ok, rate} <- result do
+      {:ok, div(rate, elapsed_seconds)}
+    else
+      errtup -> errtup
+    end
   end
 
-  def get_prev_rate(%Source{token: source_id} = _source, period: period) do
-    prev_ts = Timex.shift(unix_ts_now(), [{period, -1}])
+  # Counters
 
-    source_id
+  def get_prev_counter(source_or_user, period: period) do
+    timex_period =
+      case period do
+        :second -> :seconds
+        :minute -> :minutes
+        :hour -> :hours
+        :day -> :days
+      end
+
+    prev_ts = Timex.shift(Timex.now(), [{timex_period, -1}])
+
+    source_or_user
     |> log_counter(period, prev_ts)
     |> LR.get()
+    |> handle_response(:integer)
   end
 
-  def get_prev_rate(%User{id: user_id} = _user, period: period) do
-    LR.get("user::#{user_id}::last_rate::#{period}::global::v1")
+  def get_current_counter(source_or_user, period: period) do
+    source_or_user
+    |> log_counter(period, unix_ts_now())
+    |> LR.get()
+    |> handle_response(:integer)
   end
 
   # Buffer counts
