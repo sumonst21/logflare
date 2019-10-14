@@ -4,15 +4,11 @@ defmodule LogflareWeb.LogControllerTest do
   alias Logflare.SystemMetrics.AllLogsLogged
   alias Logflare.{Users, Sources}
   alias Logflare.Source.BigQuery.Buffer, as: SourceBuffer
+  alias Logflare.Sources.ClusterStore
   use Placebo
 
   setup do
     import Logflare.DummyFactory
-
-    allow AllLogsLogged.log_count(any()), return: {:ok, 0}
-    allow AllLogsLogged.incriment(any()), return: :ok
-
-    Sources.Counters.start_link()
 
     u1 = insert(:user)
     u2 = insert(:user)
@@ -96,9 +92,10 @@ defmodule LogflareWeb.LogControllerTest do
           )
 
         assert json_response(conn, 406) == err_message
-        refute_called AllLogsLogged.incriment(any()), once()
-        refute_called AllLogsLogged.log_count(any()), once()
       end
+
+      Process.sleep(10)
+      assert {:ok, 0} == ClusterStore.get_total_log_count(s)
     end
 
     test "with invalid source token", %{conn: conn, users: [u | _], sources: _} do
@@ -128,8 +125,6 @@ defmodule LogflareWeb.LogControllerTest do
         )
 
       assert json_response(conn, 406) == err_message
-      refute_called AllLogsLogged.incriment(any()), once()
-      refute_called AllLogsLogged.log_count(any()), once()
     end
 
     test "with invalid field types", %{conn: conn, users: [u | _], sources: [s | _]} do
@@ -161,8 +156,8 @@ defmodule LogflareWeb.LogControllerTest do
         )
 
       assert json_response(conn, 406) == err_message
-      refute_called AllLogsLogged.incriment(any()), once()
-      refute_called AllLogsLogged.log_count(any()), once()
+      Process.sleep(10)
+      assert {:ok, 0} == ClusterStore.get_total_log_count(s)
     end
 
     test "fails for unauthorized user", %{conn: conn, users: [_u1, u2], sources: [s]} do
@@ -179,6 +174,8 @@ defmodule LogflareWeb.LogControllerTest do
         )
 
       assert json_response(conn, 403) == %{"message" => "Source is not owned by this user."}
+      Process.sleep(10)
+      assert {:ok, 0} == ClusterStore.get_total_log_count(s)
     end
   end
 
@@ -200,6 +197,9 @@ defmodule LogflareWeb.LogControllerTest do
 
       assert json_response(conn, 200) == %{"message" => "Logged!"}
       assert_called_modules_from_logs_context(s.token)
+
+      Process.sleep(10)
+      assert {:ok, 1} == ClusterStore.get_total_log_count(s)
     end
 
     test "succeeds with source (token)", %{conn: conn, users: [u | _], sources: [s]} do
@@ -217,6 +217,9 @@ defmodule LogflareWeb.LogControllerTest do
 
       assert json_response(conn, 200) == %{"message" => "Logged!"}
       assert_called_modules_from_logs_context(s.token)
+
+      Process.sleep(10)
+      assert {:ok, 1} == ClusterStore.get_total_log_count(s)
     end
   end
 
@@ -236,10 +239,10 @@ defmodule LogflareWeb.LogControllerTest do
         )
 
       assert json_response(conn, 200) == %{"message" => "Logged!"}
-      assert_called Sources.Counters.incriment(s.token), times(3)
-      assert_called Sources.Counters.get_total_inserts(s.token), times(3)
       assert_called SourceBuffer.push("#{s.token}", any()), times(3)
-      assert_called AllLogsLogged.incriment(any()), times(3)
+
+      Process.sleep(10)
+      assert {:ok, 3} == ClusterStore.get_total_log_count(s)
     end
 
     test "with nil and empty map metadata", %{conn: conn, users: [u | _], sources: [s | _]} do
@@ -257,21 +260,18 @@ defmodule LogflareWeb.LogControllerTest do
         )
 
       assert json_response(conn, 200) == %{"message" => "Logged!"}
+
+      Process.sleep(10)
+      assert {:ok, 1} == ClusterStore.get_total_log_count(s)
     end
   end
 
   defp assert_called_modules_from_logs_context(token) do
-    assert_called Sources.Counters.incriment(token), once()
-    assert_called Sources.Counters.get_total_inserts(token), once()
     assert_called SourceBuffer.push("#{token}", any()), once()
-    assert_called AllLogsLogged.incriment(any()), once()
   end
 
   defp allow_mocks(_context) do
-    allow Sources.Counters.incriment(any()), return: :ok
     allow SourceBuffer.push(any(), any()), return: :ok
-    allow Sources.Counters.get_total_inserts(any()), return: {:ok, 1}
-    allow AllLogsLogged.incriment(any()), return: :ok
     :ok
   end
 

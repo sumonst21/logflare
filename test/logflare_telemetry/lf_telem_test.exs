@@ -11,6 +11,7 @@ defmodule LogflareTelemetry.MainTest do
   end
 
   describe "main test" do
+    @describetag :skip
     test "broadcast state" do
       expect Backend.ingest([
                [

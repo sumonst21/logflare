@@ -1,7 +1,7 @@
 ExUnit.start()
 Faker.start()
 
-:ok = LocalCluster.start()
+# :ok = LocalCluster.start()
 
 {:ok, _} = Application.ensure_all_started(:ex_machina)
 
