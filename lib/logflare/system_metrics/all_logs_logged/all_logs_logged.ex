@@ -4,6 +4,8 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
 
   alias Logflare.Repo
   alias Logflare.SystemMetric
+  alias Logflare.Redix, as: LfRedix
+  alias Logflare.Sources.ClusterStore
 
   require Logger
 
@@ -18,15 +20,17 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
   def init(state) do
     persist()
 
-    case Repo.get_by(SystemMetric, node: node_name()) do
-      nil ->
-        create(@total_logs, 0)
+    {:ok, state, {:continue, :load_table_counts}}
+  end
 
-      total_logs ->
-        create(@total_logs, total_logs.all_logs_logged)
+  def handle_continue(:load_table_counts, state) do
+    {:ok, sum_count} = ClusterStore.get_sum_of_total_source_log_count()
+    {:ok, total_count} = ClusterStore.get_all_sources_log_count()
+    if sum_count > total_count do
+      :ok = ClusterStore.all_sources_log_count()
+            |> LfRedix.set(sum_count)
     end
-
-    {:ok, state}
+    {:noreply, state}
   end
 
   def handle_info(:persist, state) do
@@ -39,51 +43,9 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
     {:noreply, state}
   end
 
-  ## Public Functions
-
-  @spec create(atom, integer()) :: {:ok, atom}
-  def create(metric, count \\ 0) do
-    :ets.new(@table, [:public, :named_table])
-
-    :ets.update_counter(@table, metric, {2, 0}, {metric, 0, 0})
-    :ets.update_counter(@table, metric, {3, count}, {metric, 0, 0})
-
-    {:ok, metric}
-  end
-
-  @spec incriment(atom) :: {:ok, atom}
-  def incriment(metric) do
-    :ets.update_counter(@table, metric, {2, 1}, {metric, 0, 0})
-
-    {:ok, metric}
-  end
-
-  @spec incriment(atom, integer) :: {:ok, atom}
-  def incriment(metric, count) do
-    :ets.update_counter(@table, metric, {2, count}, {metric, 0, 0})
-
-    {:ok, metric}
-  end
-
-  @spec log_count(atom) :: {:ok, non_neg_integer}
-  def log_count(metric) do
-    [{_metric, inserts_since_init, init_log_count}] = :ets.lookup(@table, metric)
-    count = inserts_since_init + init_log_count
-
-    {:ok, count}
-  end
-
-  def init_log_count(metric) do
-    [{_metric, _inserts_since_init, init_log_count}] = :ets.lookup(@table, metric)
-
-    {:ok, init_log_count}
-  end
-
-  def all_metrics(metric) do
-    [{_metric, inserts_since_init, init_log_count}] = :ets.lookup(@table, metric)
-    total = inserts_since_init + init_log_count
-
-    {:ok, %{inserts_since_init: inserts_since_init, init_log_count: init_log_count, total: total}}
+  @spec log_count(atom()) :: {:ok, non_neg_integer}
+  def log_count(@total_logs) do
+    ClusterStore.get_all_sources_log_count()
   end
 
   ## Private Functions

@@ -37,6 +37,7 @@
         <div class="row">
           <div class="col-md-12">
             <div class="h3div">
+              <%= live_render(@conn, LogflareWeb.GlobalLogMetricsLV) %>
             </div>
           </div>
         </div>

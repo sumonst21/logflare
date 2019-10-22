@@ -31,6 +31,7 @@ defmodule Logflare.Sources.ClusterStore do
       |> RMulti.client_reply(:skip)
       |> RMulti.incr(all_sources_log_count())
       |> RMulti.incr(source_log_count(source))
+      |> RMulti.incr(log_counter("all_logs", :second, Timex.now()), expire: 10)
 
     rmulti =
       Enum.reduce(source_counters_keys, rmulti, fn {period, expiration}, acc ->
@@ -59,8 +60,26 @@ defmodule Logflare.Sources.ClusterStore do
     "source::all_sources:total_log_count::v1"
   end
 
+  def get_all_sources_log_count() do
+    all_sources_log_count
+    |> LR.get()
+    |> handle_response(:integer)
+  end
+
   def source_log_count(%Source{token: source_id}) do
     "source::#{source_id}::total_log_count::v1"
+  end
+
+  def get_sum_of_total_source_log_count() do
+    with {:ok, keys} <- LR.scan_all_match("*source::*::total_log_count::v1"),
+         {:ok, result} <- LR.multi_get(keys) do
+      values = clean_and_parse(result)
+      sum = Enum.sum(values)
+      {:ok, sum}
+    else
+      {:error, :empty_keys_list} -> {:ok, 0}
+      errtup -> errtup
+    end
   end
 
   # Total log count
@@ -80,6 +99,12 @@ defmodule Logflare.Sources.ClusterStore do
   end
 
   # Name generators
+
+  defp log_counter(id, granularity, ts) when is_binary(id) and is_atom(granularity) do
+    suffix = gen_suffix(granularity, ts)
+    "global::#{id}::log_count::#{suffix}::v1"
+  end
+
   defp log_counter(%Source{token: source_id}, granularity, ts) when is_atom(granularity) do
     suffix = gen_suffix(granularity, ts)
     "source::#{source_id}::log_count::#{suffix}::v1"
