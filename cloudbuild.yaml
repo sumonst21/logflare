@@ -22,22 +22,24 @@ steps:
       [
         "build",
         "-t",
-        "gcr.io/logflare-staging/logflare_origin:$COMMIT_SHA",
+        "gcr.io/logflare-staging/logflare_origin:redis_$COMMIT_SHA",
+        "-t",
+        "gcr.io/logflare-staging/logflare_origin:redis_latest",
         ".",
       ]
   - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/logflare-staging/logflare_origin:$COMMIT_SHA"]
+    args: ["push", "gcr.io/logflare-staging/logflare_origin:redis_$COMMIT_SHA"]
   - name: "gcr.io/cloud-builders/kubectl"
     args:
       - set
       - image
       - deployment/logflare-staging
-      - logflare=gcr.io/logflare-staging/logflare_origin:$COMMIT_SHA
+      - logflare=gcr.io/logflare-staging/logflare_origin:redis_$COMMIT_SHA
     env:
-      - CLOUDSDK_COMPUTE_ZONE=us-central1-a
+      - CLOUDSDK_COMPUTE_ZONE=us-central1
       - CLOUDSDK_CONTAINER_CLUSTER=logflare-staging-cluster
 
 timeout: 1800s
 
 images:
-  - gcr.io/logflare-staging/logflare_origin:$COMMIT_SHA
+  - gcr.io/logflare-staging/logflare_origin:redis_$COMMIT_SHA
