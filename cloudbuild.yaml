@@ -33,7 +33,7 @@ steps:
     args:
       - set
       - image
-      - deployment/logflare-staging
+      - deployment/logflare-staging-redis
       - logflare=gcr.io/logflare-staging/logflare_origin:redis_$COMMIT_SHA
     env:
       - CLOUDSDK_COMPUTE_ZONE=us-central1
