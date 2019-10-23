@@ -20,6 +20,12 @@ defmodule Logflare.Application do
       Logflare.Logs.RejectedLogEvents,
       supervisor(Logflare.Repo, []),
       supervisor(LogflareWeb.Endpoint, []),
+      supervisor(Phoenix.PubSub.PG2, [
+        [
+          name: Logflare.PubSub,
+          fastlane: Phoenix.Channel.Server
+        ]
+      ]),
       {Task.Supervisor, name: Logflare.TaskSupervisor}
     ]
 

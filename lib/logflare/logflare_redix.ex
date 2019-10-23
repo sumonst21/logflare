@@ -50,7 +50,10 @@ defmodule Logflare.Redix do
   end
 
   def set(key, value) do
-    command(["SET", key, value])
+    case command(["SET", key, value]) do
+      {:ok, "OK"} -> :ok
+      errtup -> errtup
+    end
   end
 
   def set(key, value, opts) do

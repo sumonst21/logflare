@@ -44,11 +44,11 @@ defmodule Logflare.Users.API do
       }
     end
 
-    def put_user_rate(user, rate) do
+    def put_user_rate(user, rate) when is_integer(rate) do
       Cachex.put(@cache, {:rate, :user, user.id}, rate)
     end
 
-    def put_source_rate(source, rate) do
+    def put_source_rate(source, rate) when is_integer(rate) do
       Cachex.put(@cache, {:rate, :source, source.token}, rate)
     end
 

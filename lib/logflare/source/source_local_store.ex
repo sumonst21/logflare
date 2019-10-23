@@ -63,19 +63,10 @@ defmodule Logflare.Source.LocalStore do
     end
 
     {:ok, last_source_minute_rate} = ClusterStore.get_current_counter(source, period: :minute)
-
     {:ok, last_user_minute_rate} = ClusterStore.get_current_counter(source.user, period: :minute)
 
-    parse_rate = fn maybe_num ->
-      cond do
-        is_nil(maybe_num) -> 0
-        is_integer(maybe_num) -> maybe_num
-        is_binary(maybe_num) -> String.to_integer(maybe_num)
-      end
-    end
-
-    Users.API.Cache.put_user_rate(source.user, parse_rate.(last_user_minute_rate))
-    Users.API.Cache.put_source_rate(source, parse_rate.(last_source_minute_rate))
+    Users.API.Cache.put_user_rate(source.user, last_user_minute_rate)
+    Users.API.Cache.put_source_rate(source, last_source_minute_rate)
 
     {:noreply, state}
   end

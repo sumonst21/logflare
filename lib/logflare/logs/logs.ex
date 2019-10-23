@@ -69,6 +69,7 @@ defmodule Logflare.Logs do
     # indvididual source genservers
     Buffer.push(source_table_string, le)
     Source.ChannelTopics.broadcast_new(le)
+    RecentLogsServer.push(source.token, le)
   end
 
   defp ingest_and_broadcast(%LE{source: %Source{} = source} = le) do
@@ -76,6 +77,7 @@ defmodule Logflare.Logs do
 
     # indvididual source genservers
     Buffer.push(source_table_string, le)
+    RecentLogsServer.push(source.token, le)
 
     :ok == ClusterStore.increment_counters(source)
 

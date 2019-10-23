@@ -10,6 +10,10 @@ config :logger, level: :warn
 
 config :logflare, env: :test
 
+config :logflare, :logflare_redix,
+  host: "localhost",
+  port: 36379
+
 config :logflare, Logflare.Google,
   dataset_id_append: "_test",
   project_number: "1023172132421",

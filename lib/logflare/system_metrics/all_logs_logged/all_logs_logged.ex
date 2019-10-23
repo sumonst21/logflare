@@ -26,10 +26,13 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
   def handle_continue(:load_table_counts, state) do
     {:ok, sum_count} = ClusterStore.get_sum_of_total_source_log_count()
     {:ok, total_count} = ClusterStore.get_all_sources_log_count()
+
     if sum_count > total_count do
-      :ok = ClusterStore.all_sources_log_count()
-            |> LfRedix.set(sum_count)
+      :ok =
+        ClusterStore.all_sources_log_count()
+        |> LfRedix.set(sum_count)
     end
+
     {:noreply, state}
   end
 

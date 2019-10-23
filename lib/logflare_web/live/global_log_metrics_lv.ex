@@ -24,7 +24,7 @@ defmodule LogflareWeb.GlobalLogMetricsLV do
 
   defp put_data(socket) do
     {:ok, log_count} = ClusterStore.get_all_sources_log_count()
-  {:ok, total_logs_per_second} = ClusterStore.get_prev_counter("all_logs", period: :second)
+    {:ok, total_logs_per_second} = ClusterStore.get_prev_counter("all_logs", period: :second)
     log_count = number_to_delimited(log_count)
     total_logs_per_second = number_to_delimited(total_logs_per_second)
 

@@ -7,9 +7,15 @@ defmodule Logflare.Sources.ClusterStore do
   alias Timex.Duration
 
   @second_counter_expiration_sec 60
-  @minute_counter_expiration_sec Duration.from_minutes(10) |> Duration.to_seconds() |> round()
-  @hour_counter_expiration_sec Duration.from_hours(24) |> Duration.to_seconds() |> round()
-  @day_counter_expiration_sec Duration.from_hours(96) |> Duration.to_seconds() |> round()
+  @minute_counter_expiration_sec Duration.from_minutes(10)
+                                 |> Duration.to_seconds()
+                                 |> round()
+  @hour_counter_expiration_sec Duration.from_hours(24)
+                               |> Duration.to_seconds()
+                               |> round()
+  @day_counter_expiration_sec Duration.from_hours(96)
+                              |> Duration.to_seconds()
+                              |> round()
 
   def increment_counters(%Source{} = source) do
     source_counters_keys = [
@@ -34,22 +40,30 @@ defmodule Logflare.Sources.ClusterStore do
       |> RMulti.incr(log_counter("all_logs", :second, Timex.now()), expire: 10)
 
     rmulti =
-      Enum.reduce(source_counters_keys, rmulti, fn {period, expiration}, acc ->
-        RMulti.incr(
-          acc,
-          log_counter(source, period, Timex.now()),
-          expire: expiration
-        )
-      end)
+      Enum.reduce(
+        source_counters_keys,
+        rmulti,
+        fn {period, expiration}, acc ->
+          RMulti.incr(
+            acc,
+            log_counter(source, period, Timex.now()),
+            expire: expiration
+          )
+        end
+      )
 
     rmulti =
-      Enum.reduce(user_counters_keys, rmulti, fn {period, expiration}, acc ->
-        RMulti.incr(
-          acc,
-          log_counter(source, period, Timex.now()),
-          expire: expiration
-        )
-      end)
+      Enum.reduce(
+        user_counters_keys,
+        rmulti,
+        fn {period, expiration}, acc ->
+          RMulti.incr(
+            acc,
+            log_counter(source, period, Timex.now()),
+            expire: expiration
+          )
+        end
+      )
 
     RMulti.run(rmulti)
   end
@@ -136,7 +150,8 @@ defmodule Logflare.Sources.ClusterStore do
   end
 
   defp unix_ts_now() do
-    NaiveDateTime.utc_now() |> Timex.to_unix()
+    NaiveDateTime.utc_now()
+    |> Timex.to_unix()
   end
 
   # Max rate
