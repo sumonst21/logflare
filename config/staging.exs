@@ -46,7 +46,7 @@ config :libcluster,
     k8s_chat: [
       strategy: Elixir.Cluster.Strategy.Kubernetes.DNS,
       config: [
-        service: "logflare-staging-headless",
+        service: "logflare-redis-staging-headless",
         application_name: "logflare",
         polling_interval: 1_000
       ]

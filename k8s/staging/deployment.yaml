@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: logflare-staging-redis
+  name: logflare-redis-staging
   labels:
-    app: logflare-staging-redis
+    app: logflare-redis-staging
 spec:
   progressDeadlineSeconds: 600
   replicas: 3
@@ -11,7 +11,7 @@ spec:
   minReadySeconds: 30
   selector:
     matchLabels:
-      app: logflare-staging-redis
+      app: logflare-redis-staging
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -21,22 +21,12 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        app: logflare-staging-redis
+        app: logflare-redis-staging
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - logflare-staging-redis
-              topologyKey: kubernetes.io/hostname
       containers:
-        - image: gcr.io/logflare-staging/logflare_origin:latest
+        - image: gcr.io/logflare-staging/logflare_origin:redis_latest
           imagePullPolicy: Always
-          name: logflare
+          name: logflare-redis-staging
           ports:
             - containerPort: 4000
               protocol: TCP
@@ -48,8 +38,6 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
       dnsPolicy: ClusterFirst
-      nodeSelector:
-        logflare-node: "true"
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
