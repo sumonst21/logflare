@@ -6,7 +6,7 @@ metadata:
     app: logflare-redis-staging
   annotations:
     cloud.google.com/app-protocols: '{"https-phx":"HTTPS","http-phx":"HTTP"}'
-    beta.cloud.google.com/backend-config: '{"ports": {"http-phx":"logflare-staging-backend-config","https-phx":"logflare-staging-backend-config"}}'
+    beta.cloud.google.com/backend-config: '{"ports": {"http-phx":"logflare-redis-staging-backend-config","https-phx":"logflare-redis-staging-backend-config"}}'
 spec:
   type: NodePort
   selector:

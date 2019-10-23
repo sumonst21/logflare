@@ -1,9 +1,9 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: logflare-staging-ingress
+  name: logflare-redis-staging-ingress
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: "logflare-staging-cluster-static-ip"
+    kubernetes.io/ingress.global-static-ip-name: "logflare-staging-redis-regional-cluster-static-ip"
     ingress.gcp.kubernetes.io/pre-shared-cert: "cloudflare-origin-cert"
 spec:
   rules:
@@ -11,5 +11,5 @@ spec:
         paths:
           - path: /*
             backend:
-              serviceName: logflare-staging-service
+              serviceName: logflare-redis-staging-service
               servicePort: 80
