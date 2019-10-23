@@ -36,7 +36,7 @@ steps:
       - set
       - image
       - deployment/logflare-redis-staging
-      - logflare=gcr.io/logflare-staging/logflare_origin:redis_$COMMIT_SHA
+      - logflare-redis-staging=gcr.io/logflare-staging/logflare_origin:redis_$COMMIT_SHA
     env:
       - CLOUDSDK_COMPUTE_ZONE=us-central1
       - CLOUDSDK_CONTAINER_CLUSTER=logflare-staging-redis-regional-cluster
