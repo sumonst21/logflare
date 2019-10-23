@@ -37,7 +37,7 @@ steps:
       - logflare=gcr.io/logflare-staging/logflare_origin:redis_$COMMIT_SHA
     env:
       - CLOUDSDK_COMPUTE_ZONE=us-central1
-      - CLOUDSDK_CONTAINER_CLUSTER=logflare-staging-cluster
+      - CLOUDSDK_CONTAINER_CLUSTER=logflare-staging-redis-regional-cluster
 
 timeout: 1800s
 
