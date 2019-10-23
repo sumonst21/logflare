@@ -55,8 +55,14 @@ defmodule Logflare.Source.LocalStore do
     log_count_payload = %{source_token: state.source_id, log_count: total_log_count}
 
     Source.ChannelTopics.broadcast_rates(rates_payload)
-    Source.ChannelTopics.broadcast_buffer(buffer_payload)
-    Source.ChannelTopics.broadcast_log_count(log_count_payload)
+
+    if buffer > 0 do
+      Source.ChannelTopics.broadcast_buffer(buffer_payload)
+    end
+
+    if total_log_count > 0 do
+      Source.ChannelTopics.broadcast_log_count(log_count_payload)
+    end
 
     if max > prev_max do
       ClusterStore.set_max_rate(source_id, max)
