@@ -59,7 +59,7 @@ defmodule Logflare.Sources.ClusterStore do
         fn {period, expiration}, acc ->
           RMulti.incr(
             acc,
-            log_counter(source, period, Timex.now()),
+            log_counter(source.user, period, Timex.now()),
             expire: expiration
           )
         end
