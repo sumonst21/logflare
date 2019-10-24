@@ -34,7 +34,7 @@ defmodule Logflare.Sources.ClusterStore do
 
     rmulti =
       RMulti.new()
-      |> RMulti.client_reply(:skip)
+      |> RMulti.client_reply(:on)
       |> RMulti.incr(all_sources_log_count())
       |> RMulti.incr(source_log_count(source))
       |> RMulti.incr(log_counter("all_logs", :second, Timex.now()), expire: 10)
