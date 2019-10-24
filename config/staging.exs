@@ -25,10 +25,12 @@ config :logflare, Logflare.Repo,
   timeout: 30_000
 
 config :logflare, Logflare.Google,
-  dataset_id_append: "_staging",
-  project_number: "395392434060",
-  project_id: "logflare-staging",
-  service_account: "logflare-staging@logflare-staging.iam.gserviceaccount.com"
+       dataset_id_append: "_staging",
+       project_number: "395392434060",
+       project_id: "logflare-staging",
+       service_account: "logflare-staging@logflare-staging.iam.gserviceaccount.com",
+       compute_engine_sa: "395392434060-compute@developer.gserviceaccount.com",
+       api_sa: "395392434060@cloudservices.gserviceaccount.com"
 
 config :logflare_logger_backend,
   api_key: "aaaaa",
