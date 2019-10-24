@@ -3,6 +3,7 @@ defmodule Logflare.Sources.ClusterStore do
   alias LogflareRedix, as: LR
   alias Logflare.RedixMulti, as: RMulti
   alias Logflare.Source
+  alias Logflare.Sources
   alias Logflare.User
   alias Timex.Duration
 
@@ -17,15 +18,12 @@ defmodule Logflare.Sources.ClusterStore do
                               |> Duration.to_seconds()
                               |> round()
 
-  def increment_counters(%Source{} = source) do
-    source_counters_keys = [
-      {:second, @second_counter_expiration_sec},
-      {:minute, @minute_counter_expiration_sec},
-      {:hour, @hour_counter_expiration_sec},
-      {:day, @day_counter_expiration_sec}
-    ]
+  def increment_local_counter(source) do
+    Sources.Cache.increment_local_counter(source.token)
+  end
 
-    user_counters_keys = [
+  def increment_cluster_counters(%Source{} = source, amount \\ 1) do
+    period_counters_keys = [
       {:second, @second_counter_expiration_sec},
       {:minute, @minute_counter_expiration_sec},
       {:hour, @hour_counter_expiration_sec},
@@ -35,31 +33,24 @@ defmodule Logflare.Sources.ClusterStore do
     rmulti =
       RMulti.new()
       |> RMulti.client_reply(:on)
-      |> RMulti.incr(all_sources_log_count())
-      |> RMulti.incr(source_log_count(source))
-      |> RMulti.incr(log_counter("all_logs", :second, Timex.now()), expire: 10)
+      |> RMulti.incr(all_sources_log_count(), amount: amount)
+      |> RMulti.incr(source_log_count(source), amount: amount)
+      |> RMulti.incr(log_counter("all_logs", :second, Timex.now()), amount: amount, expire: 10)
 
     rmulti =
       Enum.reduce(
-        source_counters_keys,
+        period_counters_keys,
         rmulti,
         fn {period, expiration}, acc ->
-          RMulti.incr(
-            acc,
+          acc
+          |> RMulti.incr(
             log_counter(source, period, Timex.now()),
+            amount: amount,
             expire: expiration
           )
-        end
-      )
-
-    rmulti =
-      Enum.reduce(
-        user_counters_keys,
-        rmulti,
-        fn {period, expiration}, acc ->
-          RMulti.incr(
-            acc,
+          |> RMulti.incr(
             log_counter(source.user, period, Timex.now()),
+            amount: amount,
             expire: expiration
           )
         end

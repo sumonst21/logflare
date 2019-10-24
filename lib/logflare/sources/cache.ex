@@ -40,4 +40,21 @@ defmodule Logflare.Sources.Cache do
   defp apply_repo_fun(arg1, arg2) do
     Logflare.ContextCache.apply_repo_fun(Sources, arg1, arg2)
   end
+
+  def increment_local_counter(source_token, amount \\ 1) do
+    Cachex.incr(@cache, {:local_counter, source_token}, amount, initial: 0)
+  end
+
+  def get_and_reset_local_counter(source_token) do
+    key = {:local_counter, source_token}
+
+    {:ok, val} =
+      Cachex.transaction(@cache, [key], fn worker ->
+        {:ok, val} = Cachex.get(worker, key)
+        Cachex.del(worker, key)
+        val || 0
+      end)
+
+    val
+  end
 end

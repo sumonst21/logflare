@@ -9,6 +9,7 @@ defmodule Logflare.Source.LocalStore do
   use GenServer
 
   @tick_interval 1_000
+  @upload_local_counter_tick_interval 500
 
   # def start_link(%{source: %Source{} = source} = args, opts) do
   def start_link(%RLS{} = args, opts \\ []) do
@@ -24,6 +25,7 @@ defmodule Logflare.Source.LocalStore do
 
   def init(args) do
     tick()
+    upload_local_counter_tick()
 
     {:ok, args}
   end
@@ -77,7 +79,19 @@ defmodule Logflare.Source.LocalStore do
     {:noreply, state}
   end
 
+  def handle_info(:upload_local_counter, state) do
+    upload_local_counter_tick()
+    source = Sources.Cache.get_by_id(state.source_id)
+    val = Sources.Cache.get_and_reset_local_counter(state.source_id)
+    ClusterStore.increment_cluster_counters(source, val)
+    {:noreply, state}
+  end
+
   def tick() do
     Process.send_after(self(), :tick, @tick_interval)
+  end
+
+  def upload_local_counter_tick() do
+    Process.send_after(self(), :upload_local_counter, @upload_local_counter_tick_interval)
   end
 end

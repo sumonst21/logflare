@@ -79,7 +79,7 @@ defmodule Logflare.Logs do
     Buffer.push(source_table_string, le)
     RecentLogsServer.push(source.token, le)
 
-    :ok == ClusterStore.increment_counters(source)
+    ClusterStore.increment_local_counter(source)
 
     # all sources genservers
     # SystemMetrics.AllLogsLogged.incriment(:total_logs_logged)
