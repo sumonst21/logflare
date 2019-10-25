@@ -21,8 +21,6 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
   end
 
   def init(state) do
-    # persist()
-
     {:ok, state, {:continue, :load_table_counts}}
   end
 
@@ -43,16 +41,6 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
     {:noreply, state}
   end
 
-  def handle_info(:persist, state) do
-    persist()
-
-    {:ok, log_count} = log_count(@total_logs)
-
-    insert_or_update_node_metric(%{all_logs_logged: log_count, node: node_name()})
-
-    {:noreply, state}
-  end
-
   @spec log_count(atom()) :: {:ok, non_neg_integer}
   def log_count(@total_logs) do
     ClusterStore.get_all_sources_log_count()
@@ -62,23 +50,5 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
 
   defp node_name() do
     Atom.to_string(node())
-  end
-
-  defp insert_or_update_node_metric(params) do
-    case Repo.get_by(SystemMetric, node: node_name()) do
-      nil ->
-        changeset = SystemMetric.changeset(%SystemMetric{}, params)
-
-        Repo.insert(changeset)
-
-      metric ->
-        changeset = SystemMetric.changeset(metric, params)
-
-        Repo.update(changeset)
-    end
-  end
-
-  defp persist() do
-    Process.send_after(self(), :persist, @persist_every)
   end
 end

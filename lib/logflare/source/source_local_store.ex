@@ -61,7 +61,8 @@ defmodule Logflare.Source.LocalStore do
 
     log_count_payload = %{source_token: state.source_id, log_count: total_log_count}
 
-    if prev_source_rate > 0 or Map.get(state, :rates_payload) != rates_payload do
+    if rates_payload.average_rate > 0 or rates_payload.last_rate > 0 or
+         Map.get(state, :rates_payload) != rates_payload do
       Source.ChannelTopics.broadcast_rates(rates_payload)
     end
 
