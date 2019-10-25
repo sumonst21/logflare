@@ -81,9 +81,6 @@ defmodule Logflare.Logs do
 
     ClusterStore.increment_local_counter(source)
 
-    # all sources genservers
-    # SystemMetrics.AllLogsLogged.incriment(:total_logs_logged)
-
     # broadcasters
     Source.ChannelTopics.broadcast_new(le)
   end

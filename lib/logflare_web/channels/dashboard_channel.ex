@@ -1,13 +1,16 @@
 defmodule LogflareWeb.DashboardChannel do
   @moduledoc false
   use LogflareWeb, :channel
+  alias Logflare.Source.LocalStore
 
   def join("dashboard:" <> source_token, _payload, socket) do
     cond do
       is_admin?(socket) ->
+        LocalStore.broadcast_on_join(String.to_atom(source_token))
         {:ok, socket}
 
       has_source?(source_token, socket) ->
+        LocalStore.broadcast_on_join(String.to_atom(source_token))
         {:ok, socket}
 
       true ->
