@@ -25,12 +25,12 @@ config :logflare, Logflare.Repo,
   timeout: 30_000
 
 config :logflare, Logflare.Google,
-       dataset_id_append: "_staging",
-       project_number: "395392434060",
-       project_id: "logflare-staging",
-       service_account: "logflare-staging@logflare-staging.iam.gserviceaccount.com",
-       compute_engine_sa: "395392434060-compute@developer.gserviceaccount.com",
-       api_sa: "395392434060@cloudservices.gserviceaccount.com"
+  dataset_id_append: "_staging",
+  project_number: "395392434060",
+  project_id: "logflare-staging",
+  service_account: "logflare-staging@logflare-staging.iam.gserviceaccount.com",
+  compute_engine_sa: "395392434060-compute@developer.gserviceaccount.com",
+  api_sa: "395392434060@cloudservices.gserviceaccount.com"
 
 config :logflare_logger_backend,
   api_key: "aaaaa",
@@ -48,7 +48,7 @@ config :libcluster,
     k8s_chat: [
       strategy: Elixir.Cluster.Strategy.Kubernetes.DNS,
       config: [
-        service: "logflare-redis-staging-headless",
+        service: "logflare-staging-headless",
         application_name: "logflare",
         polling_interval: 1_000
       ]
