@@ -29,6 +29,7 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
       SystemMetric
       |> select([s], sum(s.all_logs_logged))
       |> Repo.one()
+      |> Decimal.to_integer()
 
     {:ok, total_count} = ClusterStore.get_all_sources_log_count()
 
