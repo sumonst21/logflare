@@ -6,6 +6,9 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
   alias Logflare.SystemMetric
   alias Logflare.Redix, as: LfRedix
   alias Logflare.Sources.ClusterStore
+  import Ecto.Query
+  alias Logflare.SystemMetric
+  alias Logflare.Repo
 
   require Logger
 
@@ -18,19 +21,23 @@ defmodule Logflare.SystemMetrics.AllLogsLogged do
   end
 
   def init(state) do
-    persist()
+    # persist()
 
     {:ok, state, {:continue, :load_table_counts}}
   end
 
   def handle_continue(:load_table_counts, state) do
-    {:ok, sum_count} = ClusterStore.get_sum_of_total_source_log_count()
+    all_logs_logged_pg =
+      SystemMetric
+      |> select([s], sum(s.all_logs_logged))
+      |> Repo.one()
+
     {:ok, total_count} = ClusterStore.get_all_sources_log_count()
 
-    if sum_count > total_count do
+    if all_logs_logged_pg > total_count do
       :ok =
         ClusterStore.all_sources_log_count()
-        |> LfRedix.set(sum_count)
+        |> LfRedix.set(all_logs_logged_pg)
     end
 
     {:noreply, state}
